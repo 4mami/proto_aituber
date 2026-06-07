@@ -2,7 +2,7 @@
     "name": "proto_aituber",
     "dockerComposeFile": "../docker-compose.yml",
     "service": "python",
-    "workspaceFolder": "/home/${containerEnv:USERNAME}/work",
+    "workspaceFolder": "/work",
     "customizations": {
         "vscode": {
           "extensions": [

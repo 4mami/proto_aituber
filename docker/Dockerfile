@@ -4,14 +4,16 @@ ARG USERID
 ARG GROUPID
 ARG USERNAME
 
+RUN apt update && apt install -y git
+
 RUN groupadd -g ${GROUPID} ${USERNAME} \
   && useradd -u ${USERID} -g ${GROUPID} -s /bin/bash -m ${USERNAME}
 
 USER ${USERID}
 
-WORKDIR /home/${USERNAME}/work
+WORKDIR /work
 
-# COPY ../work/requirements.txt ./
+COPY ../work/requirements.txt ./
 
 RUN pip install --upgrade pip --break-system-packages
 # RUN pip install -r requirements.txt
