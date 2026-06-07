@@ -1,10 +1,11 @@
 services:
   python:
     build:
-      context: ./docker
+      context: .
+      dockerfile: ./docker/Dockerfile
       args:
-        - UID=${USERID}
-        - GID=${GROUPID}
+        - USERID=${USERID}
+        - GROUPID=${GROUPID}
         - USERNAME=${USERNAME}
     tty: true
     stdin_open: true

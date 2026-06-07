@@ -11,9 +11,9 @@ USER ${USERID}
 
 WORKDIR /home/${USERNAME}/work
 
-COPY ../work/requirements.txt ./
+# COPY ../work/requirements.txt ./
 
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip --break-system-packages
 # RUN pip install -r requirements.txt
 
 CMD ["/bin/bash"]
