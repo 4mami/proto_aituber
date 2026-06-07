@@ -1,0 +1,30 @@
+{
+    "name": "proto_aituber",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "python",
+    "workspaceFolder": "/home/${containerEnv:USERNAME}/work",
+    "customizations": {
+        "vscode": {
+          "extensions": [
+            "njpwerner.autodocstring",
+            "ms-python.isort",
+            "ms-python.vscode-pylance",
+            "ms-python.python",
+            "ms-python.debugpy",
+            "ms-python.vscode-python-envs",
+            "mkxml.vscode-filesize",
+            "eamodio.gitlens",
+            "oderwat.indent-rainbow",
+            "christian-kohler.path-intellisense",
+            "Gruntfuggly.todo-tree",
+            "kirozen.wordcounter",
+            "redhat.vscode-xml",
+            "anthropic.claude-code"
+          ]
+        }
+      },
+    "features": {
+      "ghcr.io/devcontainers/features/node:2": {},
+      "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {}
+    }
+  }
