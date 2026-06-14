@@ -22,6 +22,6 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 COPY ../work/requirements.txt ./
 
 RUN pip install --upgrade pip --break-system-packages
-# RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --break-system-packages
 
 CMD ["/bin/bash"]

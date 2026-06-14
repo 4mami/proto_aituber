@@ -1,4 +1,11 @@
 services:
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-latest
+    ports:
+      - '50021:50021'
+    networks:
+      - external
+
   python:
     build:
       context: .
