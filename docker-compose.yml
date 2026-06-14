@@ -11,6 +11,7 @@ services:
     stdin_open: true
     volumes:
       - .:/work
+      - ~/.claude.json:/home/${USERNAME}/.claude.json
       - models:/root/.cache/huggingface/hub
       - claude:/home/${USERNAME}/.claude
     deploy:
