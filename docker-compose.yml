@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/work
       - ~/.claude.json:/home/${USERNAME}/.claude.json
-      - models:/root/.cache/huggingface/hub
+      - models:/home/${USERNAME}/.cache/huggingface/hub
       - claude:/home/${USERNAME}/.claude
     deploy:
       resources:
