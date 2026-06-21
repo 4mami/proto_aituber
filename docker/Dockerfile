@@ -15,6 +15,11 @@ RUN groupadd -g ${GROUPID} ${USERNAME} \
 
 USER ${USERID}
 
+# 名前付きボリューム(models)のマウント先をユーザー権限で先に作成しておく。
+# 空ボリュームはイメージ側マウント先の所有権を引き継いで初期化されるため、
+# これが無いと Docker が root 所有で初期化し HF のモデルDLが書き込めない。
+RUN mkdir -p /home/${USERNAME}/.cache/huggingface/hub
+
 WORKDIR /work
 
 RUN curl -fsSL https://claude.ai/install.sh | bash
