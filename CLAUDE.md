@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 概要
 
-`proto_aituber` — AITuber（AIで駆動するVTuber）のプロトタイプ。現時点でリポジトリに含まれるのは**開発環境のみ**で、アプリケーションコードはまだ追加されていない（`work/requirements.txt` は空で、`work/` も実質空）。新しいPythonコードは `work/` 配下に置く想定で、`work/` はコンテナ内の `/work` にバインドマウントされる。
+`proto_aituber` — AITuber（AIで駆動するVTuber）のプロトタイプ。YouTube Liveのチャットを読み、ローカルLLMで応答を生成し、VOICEVOXで音声合成し、アバター（VTube Studio）を駆動して配信する。**Phase 1（コアパイプライン: チャット → LLM → TTS → 音声再生）が実装済み**で、全体構想とフェーズ計画は `docs/design.md` を参照。新しいPythonコードは `work/` 配下に置き、`work/` はコンテナ内の `/work` にバインドマウントされる。
+
+主要コンポーネントの契約は `work/interfaces.py` の Protocol で定義される。**chat / llm / tts / audio** は本番実装と stub 実装（`work/<component>/stub.py`）の二重構成で、`work/main.py` の `--stub-*` フラグで差し替えできる。**avatar（`work/avatar/`）は Phase 3 以降の対象で、現状 stub・フラグともに未整備**（実行ループにも未統合）。Protocol 名・実装ファイル・利用可能なフラグの正確な一覧は、それぞれ `work/interfaces.py`・各 `work/<component>/`・`work/main.py` の引数定義を参照。
+
+## 開発方針 — SDD ＋ ハーネスエンジニアリング
+
+本リポジトリは **SDD（仕様駆動開発）＋ ハーネスエンジニアリング** の両輪で進める。
+
+- **SDD（仕様駆動開発）:** `docs/design.md`（全体構想）を、フェーズ単位の**受け入れ条件付き仕様**へ落としてから実装する。仕様は `docs/specs/` 等に置き、`work/interfaces.py` の Protocol を「契約＝真実の源」として紐づける。新フェーズに着手する前に **要件 → 設計 → タスク分解** を書くこと。コードを直すより仕様を直す発想を優先する。
+- **ハーネスエンジニアリング:** Protocol ＋ stub/本番の二重実装と `--stub-*` / `--stub-all` フラグを、**自動で回る検証ループ**（pytest スモークテスト＋Pyright型チェック）に接続する。受け入れ条件はそのまま stub 経由のテストケースにする。
+- **当面の優先課題:** 検証ループが未整備（pytest・リンター未導入、CIなし）。`--stub-all` のスモークテストを起点に、ここの補強を最優先とする。
+- **このファイルの保守方針:** 揮発性の事実（依存一覧・バージョンタグ・ポート番号・マウント先・設定値・フラグ名など、ファイルを見れば分かること）は散文に**書き写さず**、ソースファイルへの参照に留める（腐敗の面積を減らす）。記載するのは変わりにくい事実（アーキテクチャ・規約・なぜそうしたか）に絞る。インフラ/設定ファイルを編集したら本ファイルの該当箇所を見直すこと（`.claude/settings.json` のフックが編集時にリマインドする）。
 
 ## 開発環境
 
@@ -26,15 +37,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 環境の重要なポイント
 
-- **ベースイメージ:** `pytorch/pytorch:2.12.0-cuda13.2-cudnn9-runtime`。GPUは compose の `deploy.resources` で予約しているため、ホストにNVIDIA Container Runtimeが必要。
+- **ベースイメージ:** PyTorch公式のGPU対応イメージ（正確なタグは `docker/Dockerfile` の `FROM` を参照）。GPUは compose の `deploy.resources` で予約しているため、ホストにNVIDIA Container Runtimeが必要。
 - **ロケールは `ja_JP.UTF-8`** — このプロジェクトは日本語。コミットメッセージやコメントも日本語で書く。
-- **ポート `8000`** がホスト↔コンテナで公開されており、今後アプリが立てるサーバー用を想定している。
-- **永続化ボリューム:** `models` → Hugging Face hub のキャッシュ（`/root/.cache/huggingface/hub`）。ダウンロード済みモデルがコンテナ再ビルド後も残る。`claude` → Claude Code の設定。
+- **ポート公開:** 今後アプリが立てるサーバー用に、ホスト↔コンテナでポートを公開している（番号は `docker-compose.yml` の `ports` を参照）。
+- **永続化ボリューム:** `models`（Hugging Face hub のキャッシュ。ダウンロード済みモデルが再ビルド後も残る）と `claude`（Claude Code の設定）。各マウント先は `docker-compose.yml` を参照。
 - Claude Code はVS Code拡張に同梱されたものではなく、ネイティブインストーラ（`curl ... claude.ai/install.sh`）でイメージ内にインストールされている。設定は `claude` ボリューム + マウントした `~/.claude.json` により `down`/`up` をまたいで永続化される。
-- **依存関係:** `work/requirements.txt` に追記する。ただしDockerfileの `pip install -r requirements.txt` 行は現在**コメントアウトされている**ため、再ビルドしても依存はインストールされない。手動でインストールする（`pip install -r requirements.txt --break-system-packages`）か、ファイルを記入したらこの行のコメントを外すこと。
+- **依存関係:** 一覧は `work/requirements.txt` を参照（ここに書き写さない）。Dockerfileの `pip install -r requirements.txt --break-system-packages` で**ビルド時にインストールされる**ため、依存を追加したら再ビルド（`docker compose up -d --build`）すれば反映される。コンテナ内で個別に追加する場合は `pip install <pkg> --break-system-packages`。
+- **bitsandbytes の CUDA 13.2 対応:** インストールされる bitsandbytes が CUDA 13.2 向けバイナリを含まないため、Dockerfile内で近いCUDAバージョンの共有ライブラリへシンボリックリンクして代用している（具体的なバージョン・処理は `docker/Dockerfile` の該当ステップを参照）。
 
 ### 実行 / デバッグ
 
 - スクリプト実行: コンテナ内で `python work/<file>.py`。
-- VS Codeデバッグ: 起動構成「Python デバッガー: 現在のファイル」が、開いているファイルを `justMyCode: false` で実行する。
-- テストフレームワークやリンターはまだ未設定。Pyright/Pylance の型チェックは `standard`（`.vscode/settings.json`）。
+- VS Codeデバッグ: `.vscode/launch.json` の起動構成で、開いているファイルをそのまま実行できる（`justMyCode` 無効）。
+- テストフレームワークやリンターはまだ未設定。型チェックは Pyright/Pylance（モードは `.vscode/settings.json` を参照）。

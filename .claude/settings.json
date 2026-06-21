@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c 'import sys,json; d=json.load(sys.stdin); fp=(d.get(\"tool_input\",{}).get(\"file_path\") or d.get(\"tool_response\",{}).get(\"filePath\") or \"\"); t=(\"docker/Dockerfile\",\"docker-compose.yml\",\"work/requirements.txt\",\".devcontainer/devcontainer.json\",\".vscode/settings.json\",\".vscode/launch.json\",\".env.sample\",\"docs/design.md\"); print(json.dumps({\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"上流ファイル（インフラ/設定または docs/design.md）を変更しました。CLAUDE.md の該当記述（依存・バージョン・フェーズ状況など）が古くなっていないか確認してください。揮発性の事実は散文に書き写さず、ソースへの参照に留めること。\"}})) if any(fp.endswith(x) for x in t) else None' 2>/dev/null || true",
+            "statusMessage": "CLAUDE.md 同期チェック"
+          }
+        ]
+      }
+    ]
+  }
+}
