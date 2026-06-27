@@ -4,7 +4,8 @@ ARG USERID
 ARG GROUPID
 ARG USERNAME
 
-RUN apt update && apt install -y git curl locales
+# libportaudio2: sounddevice(音声再生)が必要とする PortAudio ランタイム
+RUN apt update && apt install -y git curl locales libportaudio2
 
 RUN echo "ja_JP UTF-8" > /etc/locale.gen && locale-gen
 
